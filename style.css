@@ -7,6 +7,7 @@
     padding: 0;
 }
 
+/* Dark theme (default) */
 :root {
     --bg: #0f0f0e;
     --surface: #181817;
@@ -19,7 +20,24 @@
     --red: #c94f4f;
     --done-text: #4a4a48;
     --radius: 6px;
+    --font-serif: 'Instrument Serif', Georgia, serif;
     --font-mono: 'DM Mono', 'Courier New', monospace;
+}
+
+/* Light theme — activated by system preference */
+@media (prefers-color-scheme: light) {
+    :root {
+        --bg: #f5f3ee;
+        --surface: #ffffff;
+        --border: #dedad2;
+        --border2: #ccc8be;
+        --text: #1a1916;
+        --muted: #908c82;
+        --accent: #b8822a;
+        --accent-dim: #c9943e;
+        --red: #b83c3c;
+        --done-text: #b0aca4;
+    }
 }
 
 html,
@@ -28,7 +46,7 @@ body {
     background: var(--bg);
     color: var(--text);
     font-family: var(--font-mono);
-    font-size: 14px;
+    font-size: 16px;
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
 }
@@ -38,7 +56,6 @@ body {
     min-height: 100vh;
     display: flex;
     align-items: center;
-    justify-content: center;
 }
 
 .screen.app-layout {
@@ -56,6 +73,7 @@ body {
     display: flex;
     flex-direction: column;
     gap: 20px;
+    margin: 0 auto;
 }
 
 .auth-brand {
@@ -116,7 +134,7 @@ body {
 
 .btn-google:hover {
     border-color: var(--accent-dim);
-    background: #1a1a18;
+    background: var(--accent-dim);
 }
 .btn-google:active {
     transform: scale(0.99);
@@ -246,7 +264,7 @@ main {
 }
 
 .todo-count {
-    font-size: 12px;
+    font-size: 14px;
     color: var(--muted);
     letter-spacing: 0.5px;
 }
@@ -263,7 +281,7 @@ main {
     border-radius: var(--radius);
     color: var(--muted);
     font-family: var(--font-mono);
-    font-size: 11px;
+    font-size: 14px;
     cursor: pointer;
     letter-spacing: 0.5px;
     transition:
@@ -293,7 +311,6 @@ main {
     border-radius: var(--radius);
     color: var(--text);
     font-family: var(--font-mono);
-    font-size: 13px;
     outline: none;
     transition: border-color 0.15s;
 }
@@ -415,7 +432,6 @@ main {
 
 .todo-text {
     flex: 1;
-    font-size: 13px;
     color: var(--text);
     word-break: break-word;
     cursor: pointer;
@@ -429,11 +445,9 @@ main {
 }
 
 .todo-meta {
-    font-size: 10px;
     color: var(--muted);
     opacity: 0.5;
     flex-shrink: 0;
-    letter-spacing: 0.3px;
 }
 
 .todo-delete {
