@@ -1,7 +1,11 @@
-// ─── Preact + HTM (no build tools)
-// htm.bind(h) gives us JSX-like tagged template syntax: html`<div />`
-import { html, render, Component } from 'https://esm.sh/htm/preact/standalone';
-import { useState, useEffect, useRef, useCallback } from 'https://esm.sh/preact/hooks';
+// ─── Preact + HTM (no build tools, no separate preact/hooks import)
+// Everything comes from the single standalone bundle so there is only
+// one Preact instance. Importing hooks from a second URL would give
+// "__H undefined" crashes because the two copies don't share state.
+import {
+  html, render,
+  useState, useEffect, useRef, useCallback,
+} from 'https://esm.sh/htm/preact/standalone';
 
 // ─── Firebase shortcuts (loaded via compat <script> tags in index.html) ───────
 const auth     = firebase.auth();
