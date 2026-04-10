@@ -1,8 +1,9 @@
 # sharedlist — setup guide
 
-A minimal shared todo app for 2–3 people. Runs on GitHub Pages + Firebase (both free).
+A minimal shared todo app for 2–3 people. Runs on GitHub Pages + Firebase.
 
 ## Files
+
 ```
 index.html          — app shell
 style.css           — styles
@@ -48,7 +49,8 @@ service cloud.firestore {
 }
 ```
 
-Replace the emails with your actual ones. This adds server-side security on top of the client-side allowlist.
+Replace the emails with your actual ones. This adds server-side security on top of the client-side
+allowlist.
 
 ---
 
@@ -66,16 +68,13 @@ Paste the config and add your allowed emails:
 
 ```js
 const firebaseConfig = {
-  apiKey: "...",
-  authDomain: "...",
-  projectId: "...",
-  // ...
+    apiKey: '...',
+    authDomain: '...',
+    projectId: '...',
+    // ...
 };
 
-const ALLOWED_EMAILS = [
-  "you@gmail.com",
-  "friend@gmail.com",
-];
+const ALLOWED_EMAILS = ['you@gmail.com', 'friend@gmail.com'];
 ```
 
 ---
@@ -104,12 +103,6 @@ Your app will be live at `https://YOUR_USERNAME.github.io/YOUR_REPO/`
 
 ---
 
-## Firebase free tier limits (Spark plan)
+## Local testing
 
-| What | Free limit |
-|------|-----------|
-| Firestore reads | 50,000/day |
-| Firestore writes | 20,000/day |
-| Auth users | Unlimited |
-
-For 2–3 people sharing 30 items, you'll never come close to any limit.
+npx sirv-cli . --cors
