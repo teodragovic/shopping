@@ -86,18 +86,72 @@ function DeniedScreen({ email, onSignOut }) {
 }
 
 // ─── TODO ITEM ────────────────────────────────────────────────────────────────
-function TodoItem({ todo, onToggle, onDelete }) {
+function TodoItem({ todo, onToggle, onEdit, onDelete }) {
     const creator = (todo.createdBy || todo.createdByEmail || '').split(' ')[0];
+    const [editing, setEditing] = useState(false);
+    const [draft, setDraft] = useState(todo.text);
+    const editRef = useRef(null);
+    // Leaving edit mode unmounts the focused input, which fires a trailing
+    // blur. This flag makes sure Enter/Escape finalize once and that stray
+    // blur is ignored (otherwise Enter would write twice and Escape would
+    // commit the text it was meant to discard).
+    const finalizedRef = useRef(false);
+
+    // Focus + select the text when entering edit mode.
+    useEffect(() => {
+        if (editing && editRef.current) {
+            editRef.current.focus();
+            editRef.current.select();
+        }
+    }, [editing]);
+
+    const startEdit = () => {
+        finalizedRef.current = false;
+        setDraft(todo.text);
+        setEditing(true);
+    };
+
+    // save=true commits the draft; save=false discards it.
+    const finish = (save) => {
+        if (finalizedRef.current) return;
+        finalizedRef.current = true;
+        const next = draft.trim();
+        if (save && next && next !== todo.text) onEdit(todo.id, next);
+        else setDraft(todo.text); // revert display if discarded/empty/unchanged
+        setEditing(false);
+    };
+
+    const onKeyDown = (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            finish(true);
+        } else if (e.key === 'Escape') {
+            e.preventDefault();
+            finish(false);
+        }
+    };
 
     return html`
-        <li class=${`todo-item${todo.done ? ' done' : ''}`}>
+        <li class=${`todo-item${todo.done ? ' done' : ''}${editing ? ' editing' : ''}`}>
             <div
                 class=${`todo-check${todo.done ? ' checked' : ''}`}
                 onClick=${() => onToggle(todo.id, todo.done)}
             ></div>
-            <span class="todo-text" onClick=${() => onToggle(todo.id, todo.done)}>
-                ${todo.text}
-            </span>
+            ${editing
+                ? html`<input
+                      ref=${editRef}
+                      class="todo-edit-input"
+                      type="text"
+                      maxlength="120"
+                      autocomplete="off"
+                      value=${draft}
+                      onInput=${(e) => setDraft(e.target.value)}
+                      onKeyDown=${onKeyDown}
+                      onBlur=${() => finish(true)}
+                  />`
+                : html`<span class="todo-text" title="Click to edit" onClick=${startEdit}>
+                      ${todo.text}
+                  </span>`}
             <span class="todo-meta">${creator}</span>
             <button class="todo-delete" title="Delete" onClick=${() => onDelete(todo.id)}>×</button>
         </li>
@@ -109,13 +163,32 @@ function App() {
     const [authState, setAuthState] = useState('loading'); // loading | auth | denied | app
     const [user, setUser] = useState(null);
     const [todos, setTodos] = useState([]);
-    const [filter, setFilter] = useState('all');
     const [inputVal, setInputVal] = useState('');
     const [toast, setToast] = useState(null);
+    const [online, setOnline] = useState(navigator.onLine);
+    const [pending, setPending] = useState(false); // unsynced local writes
     const inputRef = useRef(null);
     const unsubRef = useRef(null);
 
     const showToast = (msg) => setToast(msg);
+
+    // ── Online / offline listener ──────────────────────────────
+    useEffect(() => {
+        const goOnline = () => {
+            setOnline(true);
+            showToast('Back online — syncing');
+        };
+        const goOffline = () => {
+            setOnline(false);
+            showToast('Offline — changes saved locally');
+        };
+        window.addEventListener('online', goOnline);
+        window.addEventListener('offline', goOffline);
+        return () => {
+            window.removeEventListener('online', goOnline);
+            window.removeEventListener('offline', goOffline);
+        };
+    }, []);
 
     // ── Auth listener ──────────────────────────────────────────
     useEffect(() => {
@@ -146,7 +219,12 @@ function App() {
 
         if (unsubRef.current) unsubRef.current();
         unsubRef.current = todosRef.orderBy('createdAt', 'asc').onSnapshot(
-            (snap) => setTodos(snap.docs.map((d) => ({ id: d.id, ...d.data() }))),
+            { includeMetadataChanges: true },
+            (snap) => {
+                setTodos(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+                // Local writes not yet acknowledged by the server = still syncing.
+                setPending(snap.metadata.hasPendingWrites);
+            },
             (err) => {
                 console.error(err);
                 showToast('Error loading todos');
@@ -193,6 +271,10 @@ function App() {
         todosRef.doc(id).update({ done: !done });
     }, []);
 
+    const editTodo = useCallback((id, text) => {
+        todosRef.doc(id).update({ text });
+    }, []);
+
     const deleteTodo = useCallback((id) => {
         todosRef.doc(id).delete();
     }, []);
@@ -214,14 +296,9 @@ function App() {
     // ── Derived ────────────────────────────────────────────────
     const active = todos.filter((t) => !t.done);
     const done = todos.filter((t) => t.done);
-    const visible = filter === 'active' ? active : filter === 'done' ? done : todos;
 
-    const emptyMsg =
-        filter === 'done'
-            ? 'Nothing done yet.'
-            : filter === 'active'
-              ? 'All done! 🎉'
-              : 'The list is empty.';
+    const netStatus = !online ? 'offline' : pending ? 'syncing' : 'online';
+    const netLabel = { offline: 'offline', syncing: 'syncing…', online: 'online' }[netStatus];
 
     // ── Render ─────────────────────────────────────────────────
     if (authState === 'loading')
@@ -247,6 +324,10 @@ function App() {
                     <span class="header-title">shared<em>list</em></span>
                 </div>
                 <div class="header-right">
+                    <span class=${`net-status ${netStatus}`} title=${netLabel}>
+                        <span class="net-dot"></span>
+                        <span class="net-label">${netLabel}</span>
+                    </span>
                     ${user?.photoURL && html`<img class="avatar" src=${user.photoURL} alt="" />`}
                     <span class="user-name">${user?.displayName || user?.email}</span>
                     <button class="btn-sm" onClick=${signOut}>out</button>
@@ -256,19 +337,6 @@ function App() {
             <main>
                 <div class="list-meta">
                     <span class="todo-count">${active.length} active · ${done.length} done</span>
-                    <div class="filter-tabs">
-                        ${['all', 'active', 'done'].map(
-                            (f) => html`
-                                <button
-                                    key=${f}
-                                    class=${`filter-btn${filter === f ? ' active' : ''}`}
-                                    onClick=${() => setFilter(f)}
-                                >
-                                    ${f}
-                                </button>
-                            `
-                        )}
-                    </div>
                 </div>
 
                 <div class="add-row">
@@ -287,14 +355,15 @@ function App() {
                 </div>
 
                 <ul class="todo-list">
-                    ${visible.length === 0
-                        ? html`<li class="todo-empty">${emptyMsg}</li>`
-                        : visible.map(
+                    ${todos.length === 0
+                        ? html`<li class="todo-empty">The list is empty.</li>`
+                        : todos.map(
                               (todo) => html`
                                   <${TodoItem}
                                       key=${todo.id}
                                       todo=${todo}
                                       onToggle=${toggleTodo}
+                                      onEdit=${editTodo}
                                       onDelete=${deleteTodo}
                                   />
                               `

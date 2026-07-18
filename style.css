@@ -208,6 +208,57 @@ header {
     gap: 10px;
 }
 
+/* Network / sync status pill */
+.net-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.5px;
+}
+
+.net-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--muted);
+    flex-shrink: 0;
+}
+
+.net-status.online .net-dot {
+    background: #4f9d69;
+}
+.net-status.offline {
+    color: var(--red);
+}
+.net-status.offline .net-dot {
+    background: var(--red);
+}
+.net-status.syncing {
+    color: var(--accent);
+}
+.net-status.syncing .net-dot {
+    background: var(--accent);
+    animation: net-pulse 1s ease-in-out infinite;
+}
+
+@keyframes net-pulse {
+    0%,
+    100% {
+        opacity: 0.35;
+    }
+    50% {
+        opacity: 1;
+    }
+}
+
+@media (max-width: 480px) {
+    .net-status .net-label {
+        display: none;
+    }
+}
+
 .avatar {
     width: 26px;
     height: 26px;
@@ -267,34 +318,6 @@ main {
     font-size: 14px;
     color: var(--muted);
     letter-spacing: 0.5px;
-}
-
-.filter-tabs {
-    display: flex;
-    gap: 2px;
-}
-
-.filter-btn {
-    padding: 4px 10px;
-    background: transparent;
-    border: 1px solid transparent;
-    border-radius: var(--radius);
-    color: var(--muted);
-    font-family: var(--font-mono);
-    font-size: 14px;
-    cursor: pointer;
-    letter-spacing: 0.5px;
-    transition:
-        color 0.15s,
-        border-color 0.15s;
-}
-
-.filter-btn:hover {
-    color: var(--text);
-}
-.filter-btn.active {
-    color: var(--accent);
-    border-color: var(--accent-dim);
 }
 
 /* ─── ADD ROW ──────────────────────────────────────────────── */
@@ -434,8 +457,34 @@ main {
     flex: 1;
     color: var(--text);
     word-break: break-word;
-    cursor: pointer;
-    transition: color 0.15s;
+    cursor: text;
+    padding: 3px 6px;
+    margin: -3px -6px;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    transition:
+        color 0.15s,
+        border-color 0.15s;
+}
+
+.todo-text:hover {
+    border-color: var(--border2);
+}
+
+/* Inline edit input — matches the .todo-text box so there's no layout jump */
+.todo-edit-input {
+    flex: 1;
+    min-width: 0;
+    font-family: var(--font-mono);
+    font-size: 16px;
+    line-height: 1.5;
+    color: var(--text);
+    background: var(--bg);
+    border: 1px solid var(--accent-dim);
+    border-radius: 4px;
+    padding: 3px 6px;
+    margin: -3px -6px;
+    outline: none;
 }
 
 .todo-item.done .todo-text {

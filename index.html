@@ -5,6 +5,16 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Shared Todo</title>
         <link rel="stylesheet" href="style.css" />
+
+        <!-- PWA: installable + offline -->
+        <link rel="manifest" href="manifest.webmanifest" />
+        <meta name="theme-color" content="#0f0f0e" />
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="apple-mobile-web-app-title" content="sharedlist" />
+        <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+        <link rel="icon" href="icons/icon-192.png" />
     </head>
     <body>
         <div id="app"></div>
@@ -13,5 +23,16 @@
         <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
         <script src="firebase-config.js"></script>
         <script type="module" src="app.js"></script>
+        <script>
+            // Register the service worker (offline shell). Kept out of app.js so
+            // it works even if the module fails, and stays a classic script.
+            if ('serviceWorker' in navigator) {
+                window.addEventListener('load', () => {
+                    navigator.serviceWorker
+                        .register('sw.js')
+                        .catch((err) => console.warn('SW registration failed:', err));
+                });
+            }
+        </script>
     </body>
 </html>

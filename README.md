@@ -9,6 +9,9 @@ index.html          — app shell
 style.css           — styles
 app.js              — logic
 firebase-config.js  — YOUR config (edit this)
+manifest.webmanifest— PWA metadata (name, icons, colors)
+sw.js               — service worker (offline app shell)
+icons/              — PWA / home-screen icons
 ```
 
 ---
@@ -103,6 +106,32 @@ Your app will be live at `https://YOUR_USERNAME.github.io/YOUR_REPO/`
 
 ---
 
+## Install & offline (PWA)
+
+The app is a Progressive Web App:
+
+- **Installable** — on mobile use "Add to Home Screen"; on desktop Chrome/Edge use
+  the install icon in the address bar. It then runs in its own window, no browser chrome.
+- **Works offline** — the service worker (`sw.js`) caches the app shell and CDN
+  dependencies, so it boots with no connection. Firestore keeps a local IndexedDB
+  copy of the data (`enablePersistence`), so you can read and edit the list offline.
+- **Syncs on reconnect** — edits made offline are queued locally and pushed to
+  Firestore automatically once you're back online. The header shows a status pill:
+  `online` / `syncing…` / `offline`.
+
+Notes:
+
+- Service workers only run over **HTTPS** or **localhost**. GitHub Pages serves over
+  HTTPS, so it works there out of the box. Opening `index.html` via `file://` won't.
+- When you change `index.html`, `style.css`, `app.js`, `firebase-config.js`, or the
+  icons, bump `CACHE_VERSION` in `sw.js` so clients pick up the new shell.
+
 ## Local testing
 
+Serve over http (localhost counts as a secure context for the service worker):
+
+```bash
 npx sirv-cli . --cors
+# or
+python -m http.server 8000
+```
